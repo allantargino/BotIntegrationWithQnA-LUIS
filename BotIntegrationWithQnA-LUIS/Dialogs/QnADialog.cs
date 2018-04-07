@@ -11,6 +11,7 @@ using System.Web;
 
 namespace BotIntegrationWithQnA_LUIS.Dialogs
 {
+    [Serializable]
     public class QnADialog : QnAMakerDialog
     {
         public QnADialog() : base(
@@ -28,11 +29,17 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
 
             if (answer == "No good match found in the KB")
                 BotUtilities.foundResultInQnA = false;
+
             else
             {
                 BotUtilities.foundResultInQnA = true;
                 await context.PostAsync(answer);
             }
+        }
+
+        protected override async Task DefaultWaitNextMessageAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
+        {
+            context.Done<IMessageActivity>(null);
         }
     }
 }
