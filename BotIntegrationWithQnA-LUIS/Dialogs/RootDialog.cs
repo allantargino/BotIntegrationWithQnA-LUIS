@@ -18,14 +18,16 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
         private async Task MessageReceivedAsync(IDialogContext context, IAwaitable<object> result)
         {
             var activity = await result as Activity;
+            LUISDialog dialog = new LUISDialog();
+            await context.Forward(dialog, AfterLUISDialog, activity);
+        }
 
-            // calculate something for us to return
-            int length = (activity.Text ?? string.Empty).Length;
-
-            // return our reply to the user
-            await context.PostAsync($"You sent {activity.Text} which was {length} characters");
-
-            context.Wait(MessageReceivedAsync);
+        private async Task AfterLUISDialog(IDialogContext context, IAwaitable<object> result)
+        {
+            // Something to do after LUIS exits
+            //var activity = await result as Activity;
+            //await context.PostAsync("Exited LUIS dialog");
+            context.Done(this);
         }
     }
 }
