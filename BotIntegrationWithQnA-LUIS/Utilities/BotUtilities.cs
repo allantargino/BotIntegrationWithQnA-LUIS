@@ -7,6 +7,7 @@ namespace BotIntegrationWithQnA_LUIS.Utilities
 {
     public class BotUtilities
     {
+        public static bool foundResultInQnA;
         public static async Task DisplayWelcomeMessage(Activity activity, string message)
         {
             Activity replyMessage = activity.CreateReply(message);
