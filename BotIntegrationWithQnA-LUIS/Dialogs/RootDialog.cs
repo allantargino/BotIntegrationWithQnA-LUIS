@@ -40,8 +40,12 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
 
         private async Task AfterLUISDialog(IDialogContext context, IAwaitable<object> result)
         {
-            var activity = await result as Activity;
-            await context.PostAsync("Exited LUIS dialog");
+            // The LUISIntentResult receives whatever thing we're sending from our LUISDialog
+            // in our case this is a string saying "Greeting", "TurnOn", "TurnOff" or "None"
+            // depending on the intent that was identified by LUIS
+            var LUISIntentResult = await result;
+
+            await context.PostAsync($"That was a {LUISIntentResult} intent right?");
             context.Done(this);
         }
     }
