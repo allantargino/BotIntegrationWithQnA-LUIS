@@ -33,27 +33,16 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
             }
             else
             {
-                try
-                {
-                    LUISDialog dialog = new LUISDialog();
-                    await context.Forward(dialog, AfterLUISDialog, activity);
-                }
-                catch (Exception ex)
-                {
-                    string error = ex.ToString();
-                }
+                LUISDialog dialog = new LUISDialog();
+                await context.Forward(dialog, AfterLUISDialog, activity);
             }
-            
         }
 
         private async Task AfterLUISDialog(IDialogContext context, IAwaitable<object> result)
         {
-            // Something to do after LUIS exits
             var activity = await result as Activity;
             await context.PostAsync("Exited LUIS dialog");
             context.Done(this);
         }
-        
-
     }
 }

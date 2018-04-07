@@ -14,9 +14,7 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
         public LUISDialog() : base(new LuisService(new LuisModelAttribute(
             ConfigurationManager.AppSettings["LuisApplicationId"],
             ConfigurationManager.AppSettings["LuisSubscriptionKey"])))
-        {
-
-        }
+        {}
 
         [LuisIntent("None")]
         public async Task NoneIntent(IDialogContext context, LuisResult result)
@@ -50,7 +48,7 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
 
             await context.PostAsync(randomGreetings[position]);
             
-            context.Done("TurnOn");
+            context.Done("Greeting");
         }
 
         [LuisIntent("TurnOff")]
