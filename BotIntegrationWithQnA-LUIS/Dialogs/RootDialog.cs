@@ -28,8 +28,8 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
             var activity = context.Activity as Activity;
             if (BotUtilities.foundResultInQnA)
             {
-                await context.PostAsync("Hope I helped you! \n\nExited QnA");
-                context.Done(this);
+                await context.PostAsync("Hope I helped you!");
+                context.EndConversation("EndedInQnA");
             }
             else
             {
@@ -44,9 +44,7 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
             // in our case this is a string saying "Greeting", "TurnOn", "TurnOff" or "None"
             // depending on the intent that was identified by LUIS
             var LUISIntentResult = await result;
-
-            await context.PostAsync($"That was a {LUISIntentResult} intent right?");
-            context.Done(this);
+            context.EndConversation("EndedInLUIS");
         }
     }
 }

@@ -23,6 +23,18 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
             context.Done("None");
         }
 
+        [LuisIntent("Greeting")]
+        public async Task GreetingIntent(IDialogContext context, LuisResult result)
+        {
+            List<string> randomGreetings = new List<string>() { "Hello", "Hi there", "Well hello, kind people", "I'm here for you! How can I help?" };
+            Random ran = new Random();
+            int position = ran.Next(0, randomGreetings.Count - 1);
+
+            await context.PostAsync(randomGreetings[position]);
+
+            context.Done("Greeting");
+        }
+
         [LuisIntent("TurnOn")]
         public async Task TurnOnIntent(IDialogContext context, LuisResult result)
         {
@@ -34,21 +46,10 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
 
             if (timeEntity != null)
                 await context.PostAsync($"Ok, we'll turn on the {roomEntity.Entity} lights. at {timeEntity.Entity}");
-            else await context.PostAsync($"Ok, we'll turn on the lights from the {roomEntity.Entity}");
-
+            else
+                await context.PostAsync($"Ok, we'll turn on the lights from the {roomEntity.Entity}");
+                
             context.Done("TurnOn");
-        }
-
-        [LuisIntent("Greeting")]
-        public async Task GreetingIntent(IDialogContext context, LuisResult result)
-        {
-            List<string> randomGreetings = new List<string> (){ "Hello", "Hi there", "Well hello, kind people", "I'm here for you! How can I help?"};
-            Random ran = new Random();
-            int position = ran.Next(0, randomGreetings.Count-1);
-
-            await context.PostAsync(randomGreetings[position]);
-            
-            context.Done("Greeting");
         }
 
         [LuisIntent("TurnOff")]
@@ -62,7 +63,8 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
 
             if (timeEntity != null)
                 await context.PostAsync($"Ok, we'll turn off the {roomEntity.Entity} lights. at {timeEntity.Entity}");
-            else await context.PostAsync($"Ok, we'll turn off the lights from the {roomEntity.Entity}");
+            else
+                await context.PostAsync($"Ok, we'll turn off the lights from the {roomEntity.Entity}");
 
             context.Done("TurnOff");
         }

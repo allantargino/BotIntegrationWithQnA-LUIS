@@ -3,11 +3,9 @@ using Microsoft.Bot.Builder.CognitiveServices.QnAMaker;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
 using System;
-using System.Collections.Generic;
 using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
-using System.Web;
 
 namespace BotIntegrationWithQnA_LUIS.Dialogs
 {
