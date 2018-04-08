@@ -12,6 +12,7 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
     [Serializable]
     public class QnADialog : QnAMakerDialog
     {
+        public static bool foundResultInQnA;
         public QnADialog() : base(
             new QnAMakerService (
                 new QnAMakerAttribute(
@@ -26,18 +27,20 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
             var answer = result.Answers.First().Answer;
 
             if (answer == "No good match found in the KB")
-                BotUtilities.foundResultInQnA = false;
+                foundResultInQnA = false;
 
             else
             {
-                BotUtilities.foundResultInQnA = true;
+                foundResultInQnA = true;
                 await context.PostAsync(answer);
             }
         }
 
         protected override async Task DefaultWaitNextMessageAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
         {
-            context.Done<IMessageActivity>(null);
+            IMessageActivity newMessage = context.MakeMessage();
+            newMessage.Text = foundResultInQnA.ToString();
+            context.Done<IMessageActivity>(newMessage);
         }
     }
 }

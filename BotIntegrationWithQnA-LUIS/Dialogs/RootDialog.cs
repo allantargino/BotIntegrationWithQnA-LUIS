@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using BotIntegrationWithQnA_LUIS.Utilities;
 using Microsoft.Bot.Builder.Dialogs;
@@ -20,13 +21,15 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
         {
             var activity = await result as Activity;
             QnADialog dialog = new QnADialog();
-            await context.Forward(dialog, AfterQnADialog, activity);
+            await context.Forward(dialog, AfterQnADialog, activity, CancellationToken.None);
         }
 
         private async Task AfterQnADialog(IDialogContext context, IAwaitable<object> result)
         {
-            var activity = context.Activity as Activity;
-            if (BotUtilities.foundResultInQnA)
+            var message = context.Activity as Activity;
+            bool foundResultInQnA = Convert.ToBoolean((await result as Activity).Text);
+
+            if (foundResultInQnA)
             {
                 await context.PostAsync("Hope I helped you!");
                 context.EndConversation("EndedInQnA");
@@ -34,7 +37,7 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
             else
             {
                 LUISDialog dialog = new LUISDialog();
-                await context.Forward(dialog, AfterLUISDialog, activity);
+                await context.Forward(dialog, AfterLUISDialog, message);
             }
         }
 

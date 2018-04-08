@@ -51,6 +51,7 @@ Now that you have you credentials go to your Bot code and locate the file Web.Co
   </appSettings>
 ```
 You're set! At least from a service and credentials perspective. Don't worry about the code as we'll touch it later.
+
 ### Creating the LUIS App ###
 Same as with QnA. The LUIS app we'll create is not about its complexity regarding # of intents or entities. We'll stick to basics defining:
 - 3 intents: "Greeting", "TurnOn" and "TurnOff
@@ -100,7 +101,7 @@ good afternon
 hello there
 good afternoon
 ```
-##### Greeting TurnOn #####
+##### TurnOn intent #####
 ``` console
 please turn on the [Room] lights
 turn the [Room] lights on
@@ -113,7 +114,7 @@ please turn on the [Room] lights
 turn on the [Room] lights at [Time]
 please start the [Room] lights at [Time] 
 ```
-##### Greeting TurnOff #####
+##### TurnOff intent #####
 ```console
 turn off the [Room] lights
 power off the [Room]
@@ -123,9 +124,98 @@ please turn off the lights from the [Room] at [Time]
 stop the [Room] lights at [Time]
 kill the [Room] lights at [Time] 
 ```
+#### Setting the LUIS credentials into our bot ####
+Don't forget to add your LUIS credentials to the webconfig file. You'll find your App ID and Subscription key on your [LUIS app's site](https://www.luis.ai/applications) at the <i>Publish</i> tab on the upper right side of the page. Once there, you'll see a <i>"Resources and Keys"</i> section and you'll find your credentials in a query string:
 
-## Findings ##
+![Image 4. Your LUIS credentials are in a query string](images/LUISKeys.png)
+
+Let's go to our webconfig file again and update it wirh our LUIS credentials:
+
+```xml
+<appSettings>
+    <add key="BotId" value="YourBotId" />
+    <add key="MicrosoftAppId" value="" />
+    <add key="MicrosoftAppPassword" value="" />
+    <add key="LuisSubscriptionKey" value="YOUR_LUIS_SUBSCRIPTION_KEY_GOES_HERE" />
+    <add key="LuisApplicationId" value="YOUR_LUIS_APPLICATION_ID_GOES_HERE" />
+    <add key="QnAMakerSubscriptionKey" value="YOUR_QNA_SUBSCRIPTION_KEY_GOES_HERE" />
+    <add key="QnAMakerKnowledgeBaseId" value="YOUR_QNA_KNOWLEDGE_BASE_ID_GOES_HERE" />
+  </appSettings>
+```
+## Coding time ##
+### Setting up the bot ###
+I like to clean up the MessageController code as we won't be handling a lot of activity types most of the times. In fact, for this demo we'll only play around with two types of activities: <b>Message</b> and <b>ConversationUpdate</b>. The MessagesController code goes like this:
+```csharp
+using System.Net;
+using System.Net.Http;
+using System.Threading.Tasks;
+using System.Web.Http;
+using BotIntegrationWithQnA_LUIS.Utilities;
+using Microsoft.Bot.Builder.Dialogs;
+using Microsoft.Bot.Connector;
+using System.Linq;
+
+
+namespace BotIntegrationWithQnA_LUIS
+{
+    [BotAuthentication]
+    public class MessagesController : ApiController
+    {
+        public async Task<HttpResponseMessage> Post([FromBody]Activity activity)
+        {
+            switch (activity.Type)
+            {
+                case ActivityTypes.Message:
+                    await Conversation.SendAsync(activity, () => new Dialogs.RootDialog());
+                    break;
+                case ActivityTypes.ConversationUpdate:
+                    if (activity.MembersAdded.Any(o => o.Id == activity.Recipient.Id))
+                        await BotUtilities.DisplayWelcomeMessage(activity, "Welcome! I'll be your bot guide");
+                    break;
+            }
+            return Request.CreateResponse(HttpStatusCode.OK);
+        }
+    }
+}
+```
+Simply put: Everytime a user joins to chat with the bot it will see a welcome message. And after that everytime the user writes something that message will re route to our RootDialog class.
+
+### Utilities folder ###
+I have this Utilities folder to include things that are useful throught the bot journey such as the DisplayWelcomeMessage method that could also serve to show a menu everytime a user types in keywords like "Start", "Menu", "Main Menu" and others. You could catch those keyworkds at the Post method at MessagesController.cs and then reroute the user to a main menu. But that is work for other day. Let's stick to the DisplayWelcomeMessage method in the BotUtilities class:
+```csharp
+using Microsoft.Bot.Connector;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace BotIntegrationWithQnA_LUIS.Utilities
+{
+    public class BotUtilities
+    {
+        public static bool foundResultInQnA;
+
+        public static async Task DisplayWelcomeMessage(Activity activity, string message)
+        {
+            Activity replyMessage = activity.CreateReply("");
+            ConnectorClient client = new ConnectorClient(new Uri(activity.ServiceUrl));
+
+            HeroCard card = new HeroCard();
+            card.Title = message;
+
+            List<CardImage> cardImages = new List<CardImage>();
+            cardImages.Add(new CardImage(url: "https://c.s-microsoft.com/en-us/CMSImages/ImgTwo.jpg?version=2432BB03-C90E-EF03-A2BB-BFA093E1A899"));
+            card.Images = cardImages;
+
+            replyMessage.Attachments.Add(card.ToAttachment());
+            await client.Conversations.ReplyToActivityAsync(replyMessage);
+        }
+    }
+}
+```
+The DisplayWelcomeMessage method just displays a HeroCard with an image and a message for the user. For this demo I'm receiving the message we want to display as a parameter and by default the image displayed is the logo from Microsoft.
+### QnA ###
+### LUIS ###
 
 ## Next steps ##
 
-## References ##
+## References ##    
