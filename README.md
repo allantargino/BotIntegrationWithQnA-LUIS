@@ -213,9 +213,88 @@ namespace BotIntegrationWithQnA_LUIS.Utilities
 }
 ```
 The DisplayWelcomeMessage method just displays a HeroCard with an image and a message for the user. For this demo I'm receiving the message we want to display as a parameter and by default the image displayed is the logo from Microsoft.
-### QnA ###
-### LUIS ###
+### QnA Dialog ###
+Bot Framework provides an easy way to use QnA services through the [<b>QnAMakerDialog class</b>](https://github.com/Microsoft/BotBuilder-CognitiveServices/blob/master/CSharp/Library/QnAMaker/QnAMaker/QnAMakerDialog.cs). This class has a constructor that primarily receives the credentials from an existing QnAService and then proceeds to handle the conversation trhough a series of methods in the next order:
+- StartAsync: Starts the dialog
+- MessageReceivedAsync: 
+    - Receives a message from the user and sends it to QnA using the private method <b>QueryServiceAsync</b>
+    - If it receives an answer from the QnAService it checks if it is a valid answer with the method <b>IsConfidentAnswer</b>
+    - If it is a confident answer, posts the answer to the user via the method <b>RespondFromQnAMakerResultAsync</b>
+    - After, it finalizes with the interaction with method <b>DefaultWaitNextMessageAsync</b>
+    - If it is not a confident answer it calls the method <b>QnAFeedbackStepAsync</b>
+    - Then returns to conversate with the user through the method <b>ResumeAndPostAnswer</b>
+
+The QnAMakerDialog does all this in behalf of us devs so in most cases initializing a new QnADialog should be more than enough to integrate QnA with our bot:
+```csharp
+[Serializable]
+public class QnADialog : QnAMakerDialog
+{
+    public QnADialog() : base(
+        new QnAMakerService (
+            new QnAMakerAttribute(
+                ConfigurationManager.AppSettings["QnAMakerSubscriptionKey"],
+                ConfigurationManager.AppSettings["QnAMakerKnowledgeBaseID"])))
+    {}
+}
+```
+But this integration scenario with LUIS is not a common scenario. So we'll have to override some of the methods we mentioned earlier in order for our bots to play nice between the two services:
+```csharp
+[Serializable]
+public class QnADialog : QnAMakerDialog
+{
+    public static bool foundResultInQnA;
+    public QnADialog() : base(
+        new QnAMakerService (
+            new QnAMakerAttribute(
+                ConfigurationManager.AppSettings["QnAMakerSubscriptionKey"],
+                ConfigurationManager.AppSettings["QnAMakerKnowledgeBaseID"],
+                "No good match found in the KB",
+                0)))
+    {}
+}
+```
+
+Two things:
+- First I added a boolean called <b>foundResultInQnA</b> that will helps us know if QnA got an answer for us or not 
+- I overrided the "confidence" treshold to 0 in the dialog constructor and provide a default "no answer" reply for our user even though we won't use this reply. 
+
+I needed to do this because the <b>IsConfidentAnswer</b> method returns a FALSE value when it detects that the best answer acquired has a confidence score below 0.99 OR if the difference between the confidences from the best answer and second best answer is greater than 0.20.
+
+So what? If the <b>IsConfidentAnswer</b> method returns a false value then after a series of steps it will answer the user with a "No match found" message and what I want is the bot to navigate to LUIS when this happens.
+
+So, now that the confidence threshold goes to 0 then the QnAMakerDialog will always go to the <b>RespondFromQnAMakerResultAsync</b> method and now it is time to override its code:
+```csharp
+protected override async Task RespondFromQnAMakerResultAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
+{
+    var answer = result.Answers.First().Answer;
+
+    if (answer == "No good match found in the KB")
+        foundResultInQnA = false;
+
+    else
+    {
+        foundResultInQnA = true;
+        await context.PostAsync(answer);
+    }
+}
+```
+I ditched all the complexity that lies within this method to simply ask if the QnA Service has an anwer for me or not. By default, when a QnA Service doesn't find an answer on its knowledge base it returns a "No good match found in the KB" message and since I dropped to confidence threshold to 0 that means I'll always get this answer if my bot is not completely confident on an answer. 
+If my bot has an answer then my boolean <b>foundResultInQnA</b> gets a TRUE value and the QnAMakerDialog will spost the answer straight to my user. If my QnA Service did not had an answer on his knowledge base then the boolean <b>foundResultInQnA</b> will get a false value and no answer to the user will be written (for now).
+>NOTE. For this scenario, ditching the confidence threshold to 0 is fine but you might want to play with some different values and take different approaches depending on the bot you are writing.
+
+```csharp
+protected override async Task DefaultWaitNextMessageAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
+{
+    IMessageActivity newMessage = context.MakeMessage();
+    newMessage.Text = foundResultInQnA.ToString();
+    context.Done<IMessageActivity>(newMessage);
+}
+```
+I also overrided the <b>DefaultWaitNextMessageAsync</b> method to return the value from my boolean <b>foundResultInQnA</b>. This means that my main bot dialog will receive this result and will get to decide if the user has an answer to his question or if it should rise a LUIS Dialog :)
+
+### LUIS Dialog ###
 
 ## Next steps ##
 
-## References ##    
+## References ##
+1. [<b>QnAMakerDialog documentation</b>](https://github.com/Microsoft/BotBuilder-CognitiveServices/blob/master/CSharp/Library/QnAMaker/QnAMaker/QnAMakerDialog.cs) Really useful to understand what happens within the QnAMakerDialog class methods we often overlook in favor of a simple QnA implementation for our bot.

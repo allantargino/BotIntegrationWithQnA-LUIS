@@ -1,5 +1,4 @@
-﻿using BotIntegrationWithQnA_LUIS.Utilities;
-using Microsoft.Bot.Builder.CognitiveServices.QnAMaker;
+﻿using Microsoft.Bot.Builder.CognitiveServices.QnAMaker;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
 using System;

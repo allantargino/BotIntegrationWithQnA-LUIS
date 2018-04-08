@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
-using BotIntegrationWithQnA_LUIS.Utilities;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
 
@@ -43,9 +42,6 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
 
         private async Task AfterLUISDialog(IDialogContext context, IAwaitable<object> result)
         {
-            // The LUISIntentResult receives whatever thing we're sending from our LUISDialog
-            // in our case this is a string saying "Greeting", "TurnOn", "TurnOff" or "None"
-            // depending on the intent that was identified by LUIS
             var LUISIntentResult = await result;
             context.EndConversation("EndedInLUIS");
         }
