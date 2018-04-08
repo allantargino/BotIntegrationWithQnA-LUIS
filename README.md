@@ -192,8 +192,6 @@ namespace BotIntegrationWithQnA_LUIS.Utilities
 {
     public class BotUtilities
     {
-        public static bool foundResultInQnA;
-
         public static async Task DisplayWelcomeMessage(Activity activity, string message)
         {
             Activity replyMessage = activity.CreateReply("");
@@ -213,6 +211,7 @@ namespace BotIntegrationWithQnA_LUIS.Utilities
 }
 ```
 The DisplayWelcomeMessage method just displays a HeroCard with an image and a message for the user. For this demo I'm receiving the message we want to display as a parameter and by default the image displayed is the logo from Microsoft.
+
 ### QnA Dialog ###
 Bot Framework provides an easy way to use QnA services through the [<b>QnAMakerDialog class</b>](https://github.com/Microsoft/BotBuilder-CognitiveServices/blob/master/CSharp/Library/QnAMaker/QnAMaker/QnAMakerDialog.cs). This class has a constructor that primarily receives the credentials from an existing QnAService and then proceeds to handle the conversation trhough a series of methods in the next order:
 - StartAsync: Starts the dialog
