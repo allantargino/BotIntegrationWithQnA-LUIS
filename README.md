@@ -1,14 +1,11 @@
 # How to use QnA Maker and LUIS in the same bot #
 This is a sample on how to integrate LUIS and QnA Maker services from Microsoft Azure with the Azure Bot Service
 
-><b>Disclosure</b>. This repo asumes that you have already worked with Bots, QnA and/or LUIS before. If you haven't then these tutorials will sure be useful as we won't cover the basic parts of such services. Please check them first and come back here to learn how to use both services in the same bot: [Azure Bot Service documentation](https://azure.microsoft.com/en-us/services/bot-service/), [Create your first LUIS App](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-get-started-create-app) and [Create your first QnA Maker service](https://qnamaker.ai/Documentation/CreateKb)
+><b>Disclosure</b>. This repo asumes that you have already worked with Bots, QnA and/or LUIS before. If you haven't then these tutorials will sure be useful as the basic parts of such services are not covered here. Please check them first and come back here to learn how to use both services in the same bot: [Azure Bot Service documentation](https://azure.microsoft.com/en-us/services/bot-service/), [Create your first LUIS App](https://docs.microsoft.com/en-us/azure/cognitive-services/luis/luis-get-started-create-app) and [Create your first QnA Maker service](https://qnamaker.ai/Documentation/CreateKb)
 
 
 ## Quick summary ##
-We're constantly faced with scenarios where we need both LUIS and QnA working together and while it should be easy I haven't seen many examples out there. Here's a quick way to do it calling a QnA service first and if the service doesn't have any response then it calls LUIS to get intents and answer the user
-
-## Architecture ##
-//Insert architecture here
+We're constantly faced with scenarios where we need both LUIS and QnA working together and while it should be easy there are not many examples out there. Here's a quick way to do it calling a QnA service first and if the service doesn't have any answer then it calls LUIS to get intents and answer the user.
 
 ## The staged scenario ##
 For this example, the chat bot will use LUIS to help a user to:
@@ -20,11 +17,11 @@ At the same time, the bot will use QnA Maker to answer basic questions like:
 - "Can you add a new room to the service?"
 
 ### Creating the QnA Maker service ###
->NOTICE. For this example we won't be creating <b><i>the ultimate</i></b> QnA Maker service altough nothing stops you to get creative. 
+>NOTICE. This example does not use <b><i>the ultimate</i></b> QnA Maker service altough nothing stops you to get creative. 
 
-For simplicity purposes I created a QnA Maker service wit a handful of questions, just to see that my bot is connecting to the service and retrieving some answers. Here's a screenshot of what I did:
+For simplicity purposes the QnA Maker service used has only a handful of questions, just to see that the bot is connecting to the service and retrieving some answers. Here's a screenshot the questions and answers:
 
-![Image 1. Notice that my QnA Maker only has 6 pairs of questions and answers](images/QnAMaker.png)
+![Image 1. Notice that this QnA Maker service only has 6 pairs of questions and answers](images/QnAMaker.png)
 
 That's it. Just quick steps:
 - Created a new QnA Service
@@ -33,13 +30,13 @@ That's it. Just quick steps:
 - Published the service
 - Saved the <i>QnA Maker SubscriptionKey</i> and <i>QnA Maker Knowdledge Base ID</i> to my bot webconfig file. If you don't remember how / where to save these values just go again to the [QnA Maker website](https://qnamaker.ai/Home/MyServices) and you'll see a list of all the QnAs you have created. You'll see a list of Services like this one:
 
-![Image 2. My recently published QnA Maker service](images/QnAMakerServices.png)  
+![Image 2. A published QnA Maker service](images/QnAMakerServices.png)  
 
 Just click on the <i>pencil icon</i> and once you are on our service click on <i>"Settings"</i> at the left menu. Once there you'll see a <i>"Deployment details"</i> section almost at the bottom of the page and there you'll see your service ID and subscription key:
 
-![Image 3. We have located our QnA Maker subscription key and knowledge base ID](images/QnAMakerKeys.png)
+![Image 3. Where to locate the QnA Maker subscription key and knowledge base ID](images/QnAMakerKeys.png)
 
-Now that you have you credentials go to your Bot code and locate the file Web.Config (usually it's the last file at the project). Open it and locate the <i><appSettings></i> section. Within create two new keys for your QnA credentials. You should have something like this:
+Now that the credentials have been identified it is time to go the Bot code and locate the file Web.Config (usually it's the last file at the project). Once there the credentials should go on the <i><appSettings></i> section. The result should go like this:
 
 ```xml
 <appSettings>
@@ -50,10 +47,10 @@ Now that you have you credentials go to your Bot code and locate the file Web.Co
     <add key="QnAMakerKnowledgeBaseId" value="YOUR_QNA_KNOWLEDGE_BASE_ID_GOES_HERE" />
   </appSettings>
 ```
-You're set! At least from a service and credentials perspective. Don't worry about the code as we'll touch it later.
+You're set! At least from a service and credentials perspective.
 
 ### Creating the LUIS App ###
-Same as with QnA. The LUIS app we'll create is not about its complexity regarding # of intents or entities. We'll stick to basics defining:
+Same as with QnA. The LUIS app used for this example is not about its complexity regarding the number of intents or entities. Only this entities and intents are defined:
 - 3 intents: "Greeting", "TurnOn" and "TurnOff
 - 2 entities: "Time" and "Date"
 
@@ -64,7 +61,7 @@ Same as with QnA. The LUIS app we'll create is not about its complexity regardin
 This intent has nothing but samples of different ways to greet a person. If the user writes things like "hi", "good morning", "hello there" and similars then we'll take them as all as greetings
 
 ###### TurnOn #####
- Takes utterances that involve keywords that are invoke the same action as turning the lights:
+ Takes utterances that involve keywords that invoke the same action as turning the lights:
  - "Turn the lights from the [room]"
  - Power up the [room] lights
  - Can you start the lights at the [room]?
@@ -80,18 +77,18 @@ Opposite of the TurnOn intent. Is composed of utterances that follow these simil
 - Can you please shut the [room] lights at [time]?
 
 #### Analizing the entities ####
-Did you notice we had blank spaces in the previous statements?
+Notice the blank spaces in the previous statements?
 - "Turn off the <i>[room]</i> at <i>[time]</i>
 - "Please start the lights from the <i>[room]</i> at <i> [time]</i>
 
-Well, those are our two entities:
-- Room: Will help us identify the rooms named in the TurnOn and TurnOff intents
-- Time: Will help us identify the hour/date that our user wants the bot to turn on/off the light
+Well, those are two entities:
+- Room: Will help the bot to identify the rooms named in the TurnOn and TurnOff intents
+- Time: Will help the bot to identify the hour/date that our user wants the bot to turn on/off the light
 
-Again, it's not the most complex LUIS scenario but this was on purpose to just grab a functional QnA Service and functional LUIS App and mix them
+Again, it's not the most complex LUIS scenario but this was on purpose to just grab a functional QnA Service and functional LUIS App and mix them.
 
 #### Training the LUIS App ####
-It shouldn't take us more than 30 minutes to train our LUIS App with more than a handful of utterances. These are some the utterances I used to train my app:
+It shouldn't take more than 30 minutes to train the LUIS App with more than a handful of utterances. These are some the utterances used to train the app:
 
 ##### Greeting intent #####
 ```console
@@ -129,7 +126,7 @@ Don't forget to add your LUIS credentials to the webconfig file. You'll find you
 
 ![Image 4. Your LUIS credentials are in a query string](images/LUISKeys.png)
 
-Let's go to our webconfig file again and update it wirh our LUIS credentials:
+Again, the <b>webconfig</b> file needs to be updated it with the LUIS App credentials:
 
 ```xml
 <appSettings>
@@ -144,7 +141,7 @@ Let's go to our webconfig file again and update it wirh our LUIS credentials:
 ```
 ## Coding time ##
 ### Setting up the bot: MessagesController class ###
-I like to clean up the MessageController code as we won't be handling a lot of activity types most of the times. In fact, for this demo we'll only play around with two types of activities: <b>Message</b> and <b>ConversationUpdate</b>. The MessagesController code goes like this:
+This is a personal take on the MessageController class to keep it clean. This demo only considers two types of activities: <b>Message</b> and <b>ConversationUpdate</b>. The MessagesController code goes like this:
 ```csharp
 using System.Net;
 using System.Net.Http;
@@ -181,7 +178,7 @@ namespace BotIntegrationWithQnA_LUIS
 Simply put: Everytime a user joins to chat with the bot it will see a welcome message. And after that everytime the user writes something that message will re route to our RootDialog class.
 
 ### Utilities folder ###
-I have this Utilities folder to include things that are useful throught the bot journey such as the DisplayWelcomeMessage method that could also serve to show a menu everytime a user types in keywords like "Start", "Menu", "Main Menu" and others. You could catch those keyworkds at the Post method at MessagesController.cs and then reroute the user to a main menu. But that is work for other day. Let's stick to the DisplayWelcomeMessage method in the BotUtilities class:
+The Utilities folder includes things that are useful through the bot journey such as a DisplayWelcomeMessage method that could also serve to show a menu everytime a user types in keywords like "Start", "Menu", "Main Menu" and others. Those keywords could be catched at the Post method in MessagesController.cs and then reroute the user to a main menu. But that is work for other day.
 ```csharp
 using Microsoft.Bot.Connector;
 using System;
@@ -210,7 +207,7 @@ namespace BotIntegrationWithQnA_LUIS.Utilities
     }
 }
 ```
-The DisplayWelcomeMessage method just displays a HeroCard with an image and a message for the user. For this demo I'm receiving the message we want to display as a parameter and by default the image displayed is the logo from Microsoft.
+The DisplayWelcomeMessage method just displays a HeroCard with an image and a message for the user. There's a <b>message</b> parameter that contains the text that will be displayed to the user and a default image displayed (the logo from Microsoft)
 
 ### QnA Dialog ###
 Bot Framework provides an easy way to use QnA services through the [<b>QnAMakerDialog class</b>](https://github.com/Microsoft/BotBuilder-CognitiveServices/blob/master/CSharp/Library/QnAMaker/QnAMaker/QnAMakerDialog.cs). This class has a constructor that primarily receives the credentials from an existing QnAService and then proceeds to handle the conversation trhough a series of methods in the next order:
@@ -236,7 +233,7 @@ public class QnADialog : QnAMakerDialog
     {}
 }
 ```
-But this integration scenario with LUIS is not a common scenario. So we'll have to override some of the methods we mentioned earlier in order for our bots to play nice between the two services:
+But this integration scenario with LUIS is not a common scenario. So an  override of some of the methods we mentioned earlier is needed in order for the bot to play nice between the two services:
 ```csharp
 [Serializable]
 public class QnADialog : QnAMakerDialog
@@ -254,12 +251,12 @@ public class QnADialog : QnAMakerDialog
 ```
 
 Two things:
-- First I added a boolean called <b>foundResultInQnA</b> that will helps us know if QnA got an answer for us or not 
-- I overrided the "confidence" treshold to 0 in the dialog constructor and provide a default "no answer" reply for our user even though we won't use this reply. 
+- First a boolean called <b>foundResultInQnA</b> is added that helps to  know if QnA got an answer or not 
+- The "confidence" treshold is overrided to 0 in the dialog constructor and provide a default "no answer" reply for the user even though this reply will not be used but it needs to be defined to override the confidence treshold.
 
-I needed to do this because the <b>IsConfidentAnswer</b> method returns a FALSE value when it detects that the best answer acquired has a confidence score below 0.99 OR if the difference between the confidences from the best answer and second best answer is greater than 0.20.
+This is neeeded because the <b>IsConfidentAnswer</b> method returns a FALSE value when it detects that the best answer acquired has a confidence score below 0.99 OR if the difference between the confidences from the best answer and second best answer is greater than 0.20.
 
-So what? If the <b>IsConfidentAnswer</b> method returns a false value then after a series of steps it will answer the user with a "No match found" message and what I want is the bot to navigate to LUIS when this happens.
+So what? If the <b>IsConfidentAnswer</b> method returns a false value then after a series of steps it will answer the user with a "No match found" message and what is neeeded is the bot to navigate to LUIS when this happens.
 
 So, now that the confidence threshold goes to 0 then the QnAMakerDialog will always go to the <b>RespondFromQnAMakerResultAsync</b> method and now it is time to override its code:
 ```csharp
@@ -277,8 +274,8 @@ protected override async Task RespondFromQnAMakerResultAsync(IDialogContext cont
     }
 }
 ```
-I ditched all the complexity that lies within this method to simply ask if the QnA Service has an anwer for me or not. By default, when a QnA Service doesn't find an answer on its knowledge base it returns a "No good match found in the KB" message and since I dropped to confidence threshold to 0 that means I'll always get this answer if my bot is not completely confident on an answer. 
-If my bot has an answer then my boolean <b>foundResultInQnA</b> gets a TRUE value and the QnAMakerDialog will spost the answer straight to my user. If my QnA Service did not had an answer on his knowledge base then the boolean <b>foundResultInQnA</b> will get a false value and no answer to the user will be written (for now).
+The original code from this method is more complex but for this example it is ok to simply ask if the QnA Service has an anwer or not. By default, when a QnA Service doesn't find an answer on its knowledge base it returns a "No good match found in the KB" message and since confidence threshold is dropped to 0 that means the bot will always get this answer if my QnA is not completely confident. 
+If the bot has an answer then the boolean <b>foundResultInQnA</b> gets a TRUE value and the QnAMakerDialog will spost the answer straight to the user. If the QnA Service did not have an answer on his knowledge base then the boolean <b>foundResultInQnA</b> will get a false value and no answer to the user will be written (for now).
 >NOTE. For this scenario, ditching the confidence threshold to 0 is fine but you might want to play with some different values and take different approaches depending on the bot you are writing.
 
 ```csharp
@@ -289,10 +286,10 @@ protected override async Task DefaultWaitNextMessageAsync(IDialogContext context
     context.Done<IMessageActivity>(newMessage);
 }
 ```
-I also overrided the <b>DefaultWaitNextMessageAsync</b> method to return the value from my boolean <b>foundResultInQnA</b>. This means that my main bot dialog will receive this result and will get to decide if the user has an answer to his question or if it should rise a LUIS Dialog.
+The <b>DefaultWaitNextMessageAsync</b> method is also overrided to return the value from the boolean <b>foundResultInQnA</b>. This means that the bot main dialog will receive this result and will get to decide if the user has an answer to the question posted or if it should rise a LUIS Dialog.
 
 ### LUIS Dialog ###
-We'll create a new LUISDialog class that inherits from the original <b>LuisDialog</b> class and pass the ID and Key from our LUIS app:
+A new LUISDialog class that inherits its behavior from the original <b>LuisDialog</b> class is created:
 ```csharp
 [Serializable]
 public class LUISDialog : LuisDialog<object>
@@ -303,15 +300,14 @@ public class LUISDialog : LuisDialog<object>
     {}
 }
 ```
-Next, we'll simply add a method for each intent we defined. Remember we have 4 intents:
+Next, it is time to define a method for each intent defined before. Remember there are 4 intents:
 - A default 'None' intent when LUIS does not identify a entity we defined.
 - Greeting intent
 - TurnOn intent
 - TurnOff intent
 
-
 #### None intent ####
-This method just sends a message to the user stating that the bot could not understand what the user said and internally returns a "None" message to the conversation flow. We'll see the convenience of sending this internal text later.
+This method just sends a message to the user stating that the bot could not understand what the user said and internally returns a "None" message to the conversation flow.
 
 ```csharp
 [LuisIntent("None")]
@@ -323,7 +319,7 @@ public async Task NoneIntent(IDialogContext context, LuisResult result)
 ```
 
 #### Greeting intent ####
-In case the user says hi to our bot, the latest will reply with a random greeting and later return an internal "Greeting" message to the conversation flow:
+In case the user says hi to the bot, the latest will reply with a random greeting and later return an internal "Greeting" message to the conversation flow:
 ```csharp
 [LuisIntent("Greeting")]
 public async Task GreetingIntent(IDialogContext context, LuisResult result)
@@ -338,7 +334,7 @@ public async Task GreetingIntent(IDialogContext context, LuisResult result)
 }
 ```
 #### TurnOn intent ####
-When a user wants to turn on a light from a room the bot will simply reply saying that it will turn on the lights. In a real IoT scenario this would be the part when we call to a service such as EventHubs, IoTHub, or others to take care of the instruction and send an action to an IoT device. After it sends the confirmation message to the user the bot returns a "TurnOn" text to the conversation flow:
+When a user wants to turn on a light from a room the bot will simply reply saying that it will turn on the lights. In a real IoT scenario this would be the part when there is a call to a service such as EventHubs, IoTHub, or others to take care of the instructions and send an action to an IoT device. After it sends the confirmation message to the user the bot returns a "TurnOn" text to the conversation flow:
 
 ```csharp
 [LuisIntent("TurnOn")]
@@ -381,7 +377,7 @@ public async Task TurnOffIntent(IDialogContext context, LuisResult result)
 ### Root Dialog ###
 Now that both LUIS and QnA dialogs are set up it is just a matter of calling them from the root dialog. Let's look at the code.
 
-First of all, the StartAsync method doesn't change at all so lets put focus on the remaining 3 methods in the code:
+First of all, the StartAsync method doesn't change at all there are only 3 remaining methods in the code to focus on:
 - MessageReceivedAsync
 - AfterQnADialog
 - AfterLUISDialog
