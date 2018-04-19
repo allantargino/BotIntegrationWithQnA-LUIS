@@ -143,7 +143,7 @@ Let's go to our webconfig file again and update it wirh our LUIS credentials:
   </appSettings>
 ```
 ## Coding time ##
-### Setting up the bot ###
+### Setting up the bot: MessagesController class ###
 I like to clean up the MessageController code as we won't be handling a lot of activity types most of the times. In fact, for this demo we'll only play around with two types of activities: <b>Message</b> and <b>ConversationUpdate</b>. The MessagesController code goes like this:
 ```csharp
 using System.Net;
@@ -289,11 +289,155 @@ protected override async Task DefaultWaitNextMessageAsync(IDialogContext context
     context.Done<IMessageActivity>(newMessage);
 }
 ```
-I also overrided the <b>DefaultWaitNextMessageAsync</b> method to return the value from my boolean <b>foundResultInQnA</b>. This means that my main bot dialog will receive this result and will get to decide if the user has an answer to his question or if it should rise a LUIS Dialog :)
+I also overrided the <b>DefaultWaitNextMessageAsync</b> method to return the value from my boolean <b>foundResultInQnA</b>. This means that my main bot dialog will receive this result and will get to decide if the user has an answer to his question or if it should rise a LUIS Dialog.
 
 ### LUIS Dialog ###
+We'll create a new LUISDialog class that inherits from the original <b>LuisDialog</b> class and pass the ID and Key from our LUIS app:
+```csharp
+[Serializable]
+public class LUISDialog : LuisDialog<object>
+{
+    public LUISDialog() : base(new LuisService(new LuisModelAttribute(
+        ConfigurationManager.AppSettings["LuisApplicationId"],
+        ConfigurationManager.AppSettings["LuisSubscriptionKey"])))
+    {}
+}
+```
+Next, we'll simply add a method for each intent we defined. Remember we have 4 intents:
+- A default 'None' intent when LUIS does not identify a entity we defined.
+- Greeting intent
+- TurnOn intent
+- TurnOff intent
 
-## Next steps ##
+
+#### None intent ####
+This method just sends a message to the user stating that the bot could not understand what the user said and internally returns a "None" message to the conversation flow. We'll see the convenience of sending this internal text later.
+
+```csharp
+[LuisIntent("None")]
+public async Task NoneIntent(IDialogContext context, LuisResult result)
+{
+    await context.PostAsync("Sorry! We couldn't understand you.");
+    context.Done("None");
+}
+```
+
+#### Greeting intent ####
+In case the user says hi to our bot, the latest will reply with a random greeting and later return an internal "Greeting" message to the conversation flow:
+```csharp
+[LuisIntent("Greeting")]
+public async Task GreetingIntent(IDialogContext context, LuisResult result)
+{
+    List<string> randomGreetings = new List<string>() { "Hello", "Hi there", "Well hello, kind people", "I'm here for you! How can I help?" };
+    Random ran = new Random();
+    int position = ran.Next(0, randomGreetings.Count - 1);
+
+    await context.PostAsync(randomGreetings[position]);
+
+    context.Done("Greeting");
+}
+```
+#### TurnOn intent ####
+When a user wants to turn on a light from a room the bot will simply reply saying that it will turn on the lights. In a real IoT scenario this would be the part when we call to a service such as EventHubs, IoTHub, or others to take care of the instruction and send an action to an IoT device. After it sends the confirmation message to the user the bot returns a "TurnOn" text to the conversation flow:
+
+```csharp
+[LuisIntent("TurnOn")]
+public async Task TurnOnIntent(IDialogContext context, LuisResult result)
+{
+    EntityRecommendation timeEntity;
+    result.TryFindEntity("Time", out timeEntity);
+
+    EntityRecommendation roomEntity;
+    result.TryFindEntity("Room", out roomEntity);
+
+    if (timeEntity != null)
+        await context.PostAsync($"Ok, we'll turn on the {roomEntity.Entity} lights. at {timeEntity.Entity}");
+    else
+        await context.PostAsync($"Ok, we'll turn on the lights from the {roomEntity.Entity}");
+        
+    context.Done("TurnOn");
+}
+```
+#### TurnOff intent ####
+Almost identical to the TurnOn scenario, the only difference is the reply message from the bot to the user and that it internally replies to the conversation flow with a "TurnOff" message:
+```csharp
+[LuisIntent("TurnOff")]
+public async Task TurnOffIntent(IDialogContext context, LuisResult result)
+{
+    EntityRecommendation timeEntity;
+    result.TryFindEntity("Time", out timeEntity);
+
+    EntityRecommendation roomEntity;
+    result.TryFindEntity("Room", out roomEntity);
+
+    if (timeEntity != null)
+        await context.PostAsync($"Ok, we'll turn off the {roomEntity.Entity} lights. at {timeEntity.Entity}");
+    else
+        await context.PostAsync($"Ok, we'll turn off the lights from the {roomEntity.Entity}");
+
+    context.Done("TurnOff");
+}
+```
+### Root Dialog ###
+Now that both LUIS and QnA dialogs are set up it is just a matter of calling them from the root dialog. Let's look at the code.
+
+First of all, the StartAsync method doesn't change at all so lets put focus on the remaining 3 methods in the code:
+- MessageReceivedAsync
+- AfterQnADialog
+- AfterLUISDialog
+
+#### MessageReceivedAsync method ####
+Once the user's message arrives here in the <b>result</b> parameter, this method grabs the text value of it and sends it to the QnA Dialog which handles the conversation flow and returns a result in the AfterQnADialog method: 
+```csharp
+private async Task MessageReceivedAsync(IDialogContext context, IAwaitable<object> result)
+{
+    var activity = await result as Activity;
+    QnADialog dialog = new QnADialog();
+    await context.Forward(dialog, AfterQnADialog, activity, CancellationToken.None);
+}
+```
+
+#### AfterQnADialog method ####
+This is the part when the code becomes interesting. Lets recall that a message arrives in the <b>result</b> parameter of a conversation method.
+That means that this line:
+```csharp
+bool foundResultInQnA = Convert.ToBoolean((await result as Activity).Text);
+```
+will return a boolean that defines if QnA Dialog found an answer or not.
+>NOTE. While initially a boolean defines the finding of an answer in the QnADialog it is not possible to return a boolean as a message. So an IMessageActivity object needs to be created with the boolean turned to a string and said string becomes a boolean again in the AfterQnADialog
+
+Now the bot knows if a call to the LUIS dialog is needed, but it needs the initial message that the user wrote. Said message is in the <b>context</b> parameter of the method:
+```csharp
+var message = context.Activity as Activity;
+```
+The complete code of the AfterQnADialog looks like this:
+```csharp
+private async Task AfterQnADialog(IDialogContext context, IAwaitable<object> result)
+{
+    var message = context.Activity as Activity;
+    bool foundResultInQnA = Convert.ToBoolean((await result as Activity).Text);
+
+    if (foundResultInQnA)
+    {
+        await context.PostAsync("Hope I helped you!");
+        context.EndConversation("EndedInQnA");
+    }
+    else
+    {
+        LUISDialog dialog = new LUISDialog();
+        await context.Forward(dialog, AfterLUISDialog, message);
+    }
+}
+```
+#### AfterLUISDialog method ####
+Not a lot of magic, the AfterLUISDialog just ends the conversation. In practice, code here should handle what to do if LUIS did not find an answer.
+```csharp
+private async Task AfterLUISDialog(IDialogContext context, IAwaitable<object> result)
+{
+    var LUISIntentResult = await result;
+    context.EndConversation("EndedInLUIS");
+}
+```
 
 ## References ##
 1. [<b>QnAMakerDialog documentation</b>](https://github.com/Microsoft/BotBuilder-CognitiveServices/blob/master/CSharp/Library/QnAMaker/QnAMaker/QnAMakerDialog.cs) Really useful to understand what happens within the QnAMakerDialog class methods we often overlook in favor of a simple QnA implementation for our bot.
