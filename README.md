@@ -436,4 +436,4 @@ private async Task AfterLUISDialog(IDialogContext context, IAwaitable<object> re
 ```
 
 ## References ##
-1. [<b>QnAMakerDialog documentation</b>](https://github.com/Microsoft/BotBuilder-CognitiveServices/blob/master/CSharp/Library/QnAMaker/QnAMaker/QnAMakerDialog.cs) Really useful to understand what happens within the QnAMakerDialog class methods we often overlook in favor of a simple QnA implementation for our bot.
+1. [<b>UPDATED QnAMakerDialog documentation</b>](https://github.com/Microsoft/BotBuilder-CognitiveServices/blob/master/CSharp/Samples/QnAMaker/README.md) Really useful to understand what happens within the QnAMakerDialog class methods we often overlook in favor of a simple QnA implementation for our bot.
