@@ -19,8 +19,16 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
         private async Task MessageReceivedAsync(IDialogContext context, IAwaitable<object> result)
         {
             var activity = await result as Activity;
-            QnADialog dialog = new QnADialog();
-            await context.Forward(dialog, AfterQnADialog, activity, CancellationToken.None);
+            try
+            {
+                QnADialog dialog = new QnADialog();
+                await context.Forward(dialog, AfterQnADialog, activity, CancellationToken.None);
+            }
+            catch (Exception ex)
+            {
+                string error = ex.ToString();
+            }
+            
         }
 
         private async Task AfterQnADialog(IDialogContext context, IAwaitable<object> result)

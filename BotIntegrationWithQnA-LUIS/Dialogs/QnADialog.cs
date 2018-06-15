@@ -12,22 +12,29 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
     public class QnADialog : QnAMakerDialog
     {
         public static bool foundResultInQnA;
+        public static string NoMatchMessage = "No good match found in KB.";
         public QnADialog() : base(
             new QnAMakerService (
                 new QnAMakerAttribute(
-                    ConfigurationManager.AppSettings["QnAMakerSubscriptionKey"],
+                    ConfigurationManager.AppSettings["QnAMakerAuthKey"],
                     ConfigurationManager.AppSettings["QnAMakerKnowledgeBaseID"],
-                    "No good match found in the KB",
-                    0.3,
-                    1,
+                    NoMatchMessage,
+                    0,
+                    2,
                     ConfigurationManager.AppSettings["QnAEndpointHostName"])))
         {}
+
+        protected override bool IsConfidentAnswer(QnAMakerResults qnaMakerResults)
+        {
+            foundResultInQnA = true;
+            return true;
+        }
 
         protected override async Task RespondFromQnAMakerResultAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
         {
             var answer = result.Answers.First().Answer;
 
-            if (answer == "No good match found in the KB")
+            if (answer == NoMatchMessage)
                 foundResultInQnA = false;
 
             else
