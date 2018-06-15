@@ -18,7 +18,9 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
                     ConfigurationManager.AppSettings["QnAMakerSubscriptionKey"],
                     ConfigurationManager.AppSettings["QnAMakerKnowledgeBaseID"],
                     "No good match found in the KB",
-                    0)))
+                    0.3,
+                    1,
+                    ConfigurationManager.AppSettings["QnAEndpointHostName"])))
         {}
 
         protected override async Task RespondFromQnAMakerResultAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
