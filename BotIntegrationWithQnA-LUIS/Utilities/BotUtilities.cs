@@ -7,16 +7,17 @@ namespace BotIntegrationWithQnA_LUIS.Utilities
 {
     public class BotUtilities
     {
-        public static async Task DisplayWelcomeMessage(Activity activity, string message)
+        public static async Task DisplayMessage(Activity activity, string message)
         {
-            Activity replyMessage = activity.CreateReply("");
-            ConnectorClient client = new ConnectorClient(new Uri(activity.ServiceUrl));
+            var replyMessage = activity.CreateReply("");
+            var client = new ConnectorClient(new Uri(activity.ServiceUrl));
 
-            HeroCard card = new HeroCard();
+            var card = new HeroCard();
             card.Title = message;
 
-            List<CardImage> cardImages = new List<CardImage>();
-            cardImages.Add(new CardImage(url: "https://c.s-microsoft.com/en-us/CMSImages/ImgTwo.jpg?version=2432BB03-C90E-EF03-A2BB-BFA093E1A899"));
+            string imgUrl = "https://c.s-microsoft.com/en-us/CMSImages/ImgTwo.jpg?version=2432BB03-C90E-EF03-A2BB-BFA093E1A899";
+            var cardImages = new List<CardImage>();
+            cardImages.Add(new CardImage(url: imgUrl));
             card.Images = cardImages;
 
             replyMessage.Attachments.Add(card.ToAttachment());

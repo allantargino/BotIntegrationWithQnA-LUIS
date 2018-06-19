@@ -3,8 +3,8 @@ using Microsoft.Bot.Builder.Luis;
 using Microsoft.Bot.Builder.Luis.Models;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Threading.Tasks;
+using conf = System.Configuration.ConfigurationManager;
 
 namespace BotIntegrationWithQnA_LUIS.Dialogs
 {
@@ -12,8 +12,8 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
     public class LUISDialog : LuisDialog<object>
     {
         public LUISDialog() : base(new LuisService(new LuisModelAttribute(
-            ConfigurationManager.AppSettings["LuisApplicationId"],
-            ConfigurationManager.AppSettings["LuisSubscriptionKey"])))
+            conf.AppSettings["LuisApplicationId"],
+            conf.AppSettings["LuisSubscriptionKey"])))
         {}
 
         [LuisIntent("None")]
@@ -26,8 +26,12 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
         [LuisIntent("Greeting")]
         public async Task GreetingIntent(IDialogContext context, LuisResult result)
         {
-            List<string> randomGreetings = new List<string>() { "Hello", "Hi there", "Well hello, kind people", "I'm here for you! How can I help?" };
-            Random ran = new Random();
+            var randomGreetings = new List<string>() {
+                "Hello", "Hi there",
+                "Well hello, kind people",
+                "I'm here for you! How can I help?" };
+
+            var ran = new Random();
             int position = ran.Next(0, randomGreetings.Count - 1);
 
             await context.PostAsync(randomGreetings[position]);

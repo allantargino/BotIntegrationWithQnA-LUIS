@@ -2,52 +2,57 @@
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Connector;
 using System;
-using System.Configuration;
 using System.Linq;
 using System.Threading.Tasks;
+using conf = System.Configuration.ConfigurationManager;
 
 namespace BotIntegrationWithQnA_LUIS.Dialogs
 {
     [Serializable]
     public class QnADialog : QnAMakerDialog
     {
-        public static bool foundResultInQnA;
-        public static string NoMatchMessage = "No good match found in KB.";
+        public static bool FoundResultInQnA;
+        public static string NoMatchMessage;
+        public static double ConfidenceTreshold;
         public QnADialog() : base(
             new QnAMakerService (
                 new QnAMakerAttribute(
-                    ConfigurationManager.AppSettings["QnAMakerAuthKey"],
-                    ConfigurationManager.AppSettings["QnAMakerKnowledgeBaseID"],
-                    NoMatchMessage,
-                    0,
-                    2,
-                    ConfigurationManager.AppSettings["QnAEndpointHostName"])))
-        {}
-
-        protected override bool IsConfidentAnswer(QnAMakerResults qnaMakerResults)
+                    conf.AppSettings["QnAMakerAuthKey"],
+                    conf.AppSettings["QnAMakerKnowledgeBaseID"],
+                    null, 
+                    0, 
+                    1,
+                    conf.AppSettings["QnAEndpointHostName"])))
         {
-            foundResultInQnA = true;
+            string confidence = conf.AppSettings["QnAConfidenceTreshold"];
+            ConfidenceTreshold = double.Parse(confidence);
+        }
+
+        protected override bool IsConfidentAnswer(QnAMakerResults results)
+        {
+            FoundResultInQnA = base.IsConfidentAnswer(results);
             return true;
         }
 
         protected override async Task RespondFromQnAMakerResultAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
         {
-            var answer = result.Answers.First().Answer;
+            var qnaResult = result.Answers.First();
+            var answer = qnaResult.Answer;
 
-            if (answer == NoMatchMessage)
-                foundResultInQnA = false;
+            if (qnaResult.Score < ConfidenceTreshold)
+                FoundResultInQnA = false;
 
             else
             {
-                foundResultInQnA = true;
+                FoundResultInQnA = true;
                 await context.PostAsync(answer);
             }
         }
 
         protected override async Task DefaultWaitNextMessageAsync(IDialogContext context, IMessageActivity message, QnAMakerResults result)
         {
-            IMessageActivity newMessage = context.MakeMessage();
-            newMessage.Text = foundResultInQnA.ToString();
+            var newMessage = context.MakeMessage();
+            newMessage.Text = FoundResultInQnA.ToString();
             context.Done<IMessageActivity>(newMessage);
         }
     }

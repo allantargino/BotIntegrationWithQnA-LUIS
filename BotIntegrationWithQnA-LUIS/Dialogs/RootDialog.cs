@@ -21,8 +21,9 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
             var activity = await result as Activity;
             try
             {
-                QnADialog dialog = new QnADialog();
-                await context.Forward(dialog, AfterQnADialog, activity, CancellationToken.None);
+                var dialog = new QnADialog();
+                var token = CancellationToken.None;
+                await context.Forward(dialog, AfterQnADialog, activity, token);
             }
             catch (Exception ex)
             {
@@ -43,7 +44,7 @@ namespace BotIntegrationWithQnA_LUIS.Dialogs
             }
             else
             {
-                LUISDialog dialog = new LUISDialog();
+                var dialog = new LUISDialog();
                 await context.Forward(dialog, AfterLUISDialog, message);
             }
         }
